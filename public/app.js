@@ -3,6 +3,8 @@ $(window).on('load', function() {
 });
 
 $(document).ready(function() {
+    $.ajaxSetup({ cache: false }); // Disable AJAX caching
+
     var currentPage = 1;
     var currentSearch = '';
     var currentSort = 'name_asc';
