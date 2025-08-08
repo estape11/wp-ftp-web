@@ -481,6 +481,30 @@ li:hover {
     #file-list.grid-view li {
         width: calc(50% - 5px); /* 2 columns with gap */
     }
+
+    .file-info {
+        /* Ensure file info doesn't push actions off-screen */
+        max-width: calc(100% - 140px);
+    }
+
+    .file-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .file-meta {
+        font-size: 0.8em;
+    }
+
+    .file-actions .icon-btn {
+        padding: 8px; /* Increase tap area */
+    }
+
+    .file-actions .icon-btn svg {
+        width: 28px; /* Make icon larger */
+        height: 28px;
+    }
 }
 
 
