@@ -5,7 +5,7 @@ body {
     background-color: #1a1a1a;
     color: #ffffff;
     margin: 0;
-    padding: 20px;
+    padding: 10px 20px; /* Reduced vertical padding */
 }
 
 h1, h2 {
@@ -17,7 +17,7 @@ h1, h2 {
 
 h1 {
     font-size: 4em;
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* Reduced margin */
 }
 
 h2 {
