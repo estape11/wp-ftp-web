@@ -48,10 +48,13 @@ $(document).ready(function() {
     // Function to refresh the file list
     function loadFiles() {
         saveState(); // Save state every time we load files
+        var pageSize = currentView === 'grid' ? 24 : 10;
+
         $.get('/api/files', { 
             search: currentSearch, 
             page: currentPage,
-            sortBy: currentSort
+            sortBy: currentSort,
+            pageSize: pageSize
         }, function(data) {
             var fileList = $('#file-list');
             fileList.empty();
