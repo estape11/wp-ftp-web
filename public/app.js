@@ -6,6 +6,7 @@ $(document).ready(function() {
     var currentPage = 1;
     var currentSearch = '';
     var currentSort = 'name_asc';
+    var currentView = 'list'; // 'list' or 'grid'
 
     // Function to format file size
     function formatSize(bytes) {
@@ -28,32 +29,47 @@ $(document).ready(function() {
 
             if (data.files.length === 0) {
                 fileList.append('<li>No files found.</li>');
-            } else {
-                data.files.forEach(function(file) {
-                    var modifiedDate = new Date(file.modifiedAt).toLocaleDateString();
-                    var listItem = $('<li>' +
-                        '<div class="file-info">' +
-                        '<span class="file-name">' + file.name + '</span>' +
-                        '<span class="file-meta">Size: ' + formatSize(file.size) + ' | Modified: ' + modifiedDate + ' | Type: ' + file.type + '</span>' +
-                        '</div>' +
-                        '<div class="file-actions">' +
-                        // Preview Icon
-                        '<button class="icon-btn preview-btn" title="Preview" data-filename="' + file.name + '" data-filetype="' + file.type + '">' +
-                        '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>' +
-                        '</button>' +
-                        // Download Icon
-                        '<a href="/download/' + file.name + '" class="icon-btn" title="Download">' +
-                        '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>' +
-                        '</a>' +
-                        // Delete Icon
-                        '<button class="icon-btn delete-btn" title="Delete" data-filename="' + file.name + '">' +
-                        '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
-                        '</button>' +
-                        '</div>' +
-                        '</li>');
-                    fileList.append(listItem);
-                });
+                return;
             }
+
+            var imageTypes = ['.png', '.jpg', '.jpeg', '.gif', '.svg'];
+
+            data.files.forEach(function(file) {
+                var isImage = imageTypes.indexOf(file.type) > -1;
+                var listItem;
+
+                if (currentView === 'grid' && !isImage) {
+                    return; // Skip non-images in grid view
+                }
+
+                var modifiedDate = new Date(file.modifiedAt).toLocaleDateString();
+                
+                var actionsHtml = '<div class="file-actions">' +
+                    '<button class="icon-btn preview-btn" title="Preview" data-filename="' + file.name + '" data-filetype="' + file.type + '">' +
+                    '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>' +
+                    '</button>' +
+                    '<a href="/download/' + file.name + '" class="icon-btn" title="Download">' +
+                    '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>' +
+                    '</a>' +
+                    '<button class="icon-btn delete-btn" title="Delete" data-filename="' + file.name + '">' +
+                    '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
+                    '</button>' +
+                    '</div>';
+
+                var infoHtml = '<div class="file-info">' +
+                    '<span class="file-name">' + file.name + '</span>' +
+                    '<span class="file-meta">Size: ' + formatSize(file.size) + ' | Modified: ' + modifiedDate + '</span>' +
+                    '</div>';
+
+                if (currentView === 'grid') {
+                    listItem = $('<li></li>').css('background-image', 'url(/download/' + file.name + ')');
+                    listItem.append(infoHtml + actionsHtml);
+                } else {
+                    listItem = $('<li>' + infoHtml + actionsHtml + '</li>');
+                }
+                
+                fileList.append(listItem);
+            });
 
             // Update pagination controls
             $('#page-info').text('Page ' + data.page + ' of ' + Math.ceil(data.totalFiles / data.pageSize));
@@ -61,6 +77,23 @@ $(document).ready(function() {
             $('#next-page').prop('disabled', data.page * data.pageSize >= data.totalFiles);
         });
     }
+
+    // --- VIEW SWITCHER ---
+    $('#view-list-btn').on('click', function() {
+        currentView = 'list';
+        $('#file-list').removeClass('grid-view');
+        $(this).addClass('active');
+        $('#view-grid-btn').removeClass('active');
+        loadFiles();
+    });
+
+    $('#view-grid-btn').on('click', function() {
+        currentView = 'grid';
+        $('#file-list').addClass('grid-view');
+        $(this).addClass('active');
+        $('#view-list-btn').removeClass('active');
+        loadFiles();
+    });
 
     function showNotification(message) {
         var notification = $('<div class="notification">' + message + '</div>');
@@ -165,7 +198,11 @@ $(document).ready(function() {
             },
             success: function() {
                 progressContainer.hide();
-                loadFiles(); // Refresh file list
+                // Reset view to show the newest files first
+                currentPage = 1;
+                currentSort = 'modifiedAt_desc';
+                $('#sort-select').val(currentSort);
+                loadFiles(); 
                 showNotification('Successfully uploaded ' + numFiles + ' file(s).');
                 currentUploadXhr = null;
             },
