@@ -111,20 +111,42 @@ $(document).ready(function() {
     }
 
     // --- VIEW SWITCHER ---
+    function switchView(newView) {
+        if (currentView === newView) return;
+
+        currentView = newView;
+        var fileList = $('#file-list');
+
+        fileList.addClass('view-out');
+
+        setTimeout(function() {
+            if (newView === 'grid') {
+                fileList.addClass('grid-view');
+                $('#view-grid-btn').addClass('active');
+                $('#view-list-btn').removeClass('active');
+            } else {
+                fileList.removeClass('grid-view');
+                $('#view-list-btn').addClass('active');
+                $('#view-grid-btn').removeClass('active');
+            }
+            
+            loadFiles();
+            
+            fileList.removeClass('view-out').addClass('view-in');
+            
+            setTimeout(function() {
+                fileList.removeClass('view-in');
+            }, 200);
+
+        }, 200);
+    }
+
     $('#view-list-btn').on('click', function() {
-        currentView = 'list';
-        $('#file-list').removeClass('grid-view');
-        $(this).addClass('active');
-        $('#view-grid-btn').removeClass('active');
-        loadFiles();
+        switchView('list');
     });
 
     $('#view-grid-btn').on('click', function() {
-        currentView = 'grid';
-        $('#file-list').addClass('grid-view');
-        $(this).addClass('active');
-        $('#view-list-btn').removeClass('active');
-        loadFiles();
+        switchView('grid');
     });
 
     function showNotification(message) {
