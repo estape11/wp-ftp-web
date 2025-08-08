@@ -57,9 +57,9 @@ This project was built iteratively based on the following user requests:
     ```bash
     node server.js
     ```
+    The server will automatically find an available port starting from 8080. Check the console output to see which port it is using.
 
-4.  **Access the Client:** Open your web browser and navigate to:
-    [http://localhost:8080](http://localhost:8080)
+4.  **Access the Client:** Open your web browser and navigate to the URL shown in the console (e.g., `http://localhost:8080`).
 
 ## How to Use the Application
 

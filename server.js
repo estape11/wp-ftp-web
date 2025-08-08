@@ -2,9 +2,9 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const portfinder = require('portfinder');
 
 const app = express();
-const port = 8080;
 
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
@@ -119,6 +119,14 @@ app.delete('/api/files/:filename', (req, res) => {
     });
 });
 
-app.listen(port, () => {
-    console.log(`Server listening at http://localhost:${port}`);
-});
+portfinder.basePort = 8080;
+portfinder.getPortPromise()
+    .then((port) => {
+        app.listen(port, () => {
+            console.log(`Server listening at http://localhost:${port}`);
+        });
+    })
+    .catch((err) => {
+        console.error("Could not find an open port.", err);
+        process.exit(1);
+    });
