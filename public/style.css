@@ -44,13 +44,14 @@ ul {
 
 li {
     margin-bottom: 5px;
-    padding: 15px;
+    padding: 10px 15px; /* Reduced vertical padding */
     background-color: #333333;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
     transition: background-color 0.2s;
+    overflow: hidden; /* Prevent content from spilling out */
 }
 
 li:hover {
@@ -60,16 +61,24 @@ li:hover {
 .file-info {
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Enable text truncation */
+    margin-right: 10px; /* Space between info and actions */
 }
 
 .file-name {
     font-weight: 400;
-    font-size: 1.2em;
+    font-size: 1.1em; /* Slightly smaller */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .file-meta {
-    font-size: 0.9em;
+    font-size: 0.8em; /* Slightly smaller */
     color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .file-actions {
