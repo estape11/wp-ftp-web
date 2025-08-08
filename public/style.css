@@ -1,0 +1,373 @@
+/* Windows Phone Metro-style UI */
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    margin: 0;
+    padding: 20px;
+}
+
+h1, h2 {
+    font-weight: 300; /* Light font weight for headings */
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 5px;
+}
+
+h1 {
+    font-size: 4em;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 2em;
+    color: #00aaff; /* Accent color */
+    margin-top: 40px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+li {
+    margin-bottom: 5px;
+    padding: 15px;
+    background-color: #333333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+li:hover {
+    background-color: #444;
+}
+
+.file-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.file-name {
+    font-weight: 400;
+    font-size: 1.2em;
+}
+
+.file-meta {
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+.file-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.file-actions .icon-btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.file-actions .icon-btn:hover {
+    background-color: #00aaff;
+}
+
+.file-actions .icon-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: #ffffff;
+}
+
+.file-actions .delete-btn:hover {
+    background-color: #cc0000;
+}
+
+.header-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Add space between title and icon */
+}
+
+.header-bar h2 {
+    margin-top: 0; /* Reset margin for alignment */
+}
+
+.icon-button {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-button:hover {
+    background-color: #00aaff;
+}
+
+.icon-button svg {
+    display: block;
+}
+
+#controls-container {
+    font-size: 0; /* Removes whitespace between inline-block elements */
+}
+
+#search-container, #sort-container {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 1rem; /* Reset font size */
+}
+
+#search-container {
+    width: calc(100% - 170px); /* Adjust width based on sort container */
+}
+
+#sort-container {
+    width: 150px;
+    margin-left: 20px;
+}
+
+#search-input, #sort-container select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.1em;
+    background-color: #333;
+    border: 2px solid #00aaff;
+    color: white;
+    box-sizing: border-box;
+    height: 45px;
+}
+
+#upload-container {
+    margin-top: 20px;
+}
+
+#drop-zone {
+    border: 2px dashed #00aaff;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#drop-zone.dragover {
+    background-color: #00334d;
+}
+
+#drop-zone p {
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+}
+
+#upload-button {
+    background-color: #00aaff;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+#progress-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+#progress-bar-wrapper {
+    flex-grow: 1;
+    background-color: #555;
+    height: 20px;
+}
+
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #00aaff;
+    transition: width 0.2s;
+}
+
+#cancel-upload-btn {
+    background-color: #cc0000;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+#search-container {
+    margin-bottom: 20px;
+}
+
+#search-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.1em;
+    background-color: #333;
+    border: 2px solid #00aaff;
+    color: white;
+    box-sizing: border-box;
+}
+
+#pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #333;
+}
+
+#pagination-controls button {
+    background-color: #00aaff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+#pagination-controls button:disabled {
+    background-color: #555;
+    cursor: default;
+}
+
+#notification-area {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.notification {
+    background-color: #00aaff;
+    color: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Preview Modal Styles */
+#preview-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+}
+
+#preview-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #1a1a1a;
+    padding: 20px;
+    z-index: 2001;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+    border: 1px solid #00aaff;
+}
+
+#preview-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #333;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+#preview-close:hover {
+    background-color: #cc0000;
+}
+
+#preview-close svg {
+    width: 24px;
+    height: 24px;
+    fill: #ffffff;
+}
+
+#preview-data img {
+    max-width: 100%;
+    height: auto;
+}
+
+#preview-data pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #fff;
+}
+
+/* Bootsplash Styles */
+#bootsplash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1a1a1a;
+    z-index: 3000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.loader-container {
+    display: flex;
+}
+
+.loader-dot {
+    width: 15px;
+    height: 15px;
+    background-color: #00aaff;
+    border-radius: 50%;
+    margin: 0 5px;
+    animation: move-dots 1.5s infinite ease-in-out;
+}
+
+.loader-dot:nth-child(2) { animation-delay: 0.1s; }
+.loader-dot:nth-child(3) { animation-delay: 0.2s; }
+.loader-dot:nth-child(4) { animation-delay: 0.3s; }
+.loader-dot:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes move-dots {
+    0%, 100% {
+        transform: translateX(-50px);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    50% {
+        transform: translateX(50px);
+        opacity: 1;
+    }
+}
+
+
