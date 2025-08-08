@@ -8,6 +8,34 @@ $(document).ready(function() {
     var currentSort = 'name_asc';
     var currentView = 'list'; // 'list' or 'grid'
 
+    // --- STATE MANAGEMENT ---
+    function saveState() {
+        sessionStorage.setItem('ftp_currentPage', currentPage);
+        sessionStorage.setItem('ftp_currentSearch', currentSearch);
+        sessionStorage.setItem('ftp_currentSort', currentSort);
+        sessionStorage.setItem('ftp_currentView', currentView);
+    }
+
+    function loadState() {
+        currentPage = parseInt(sessionStorage.getItem('ftp_currentPage')) || 1;
+        currentSearch = sessionStorage.getItem('ftp_currentSearch') || '';
+        currentSort = sessionStorage.getItem('ftp_currentSort') || 'name_asc';
+        currentView = sessionStorage.getItem('ftp_currentView') || 'list';
+
+        // Update UI to reflect loaded state
+        $('#search-input').val(currentSearch);
+        $('#sort-select').val(currentSort);
+        if (currentView === 'grid') {
+            $('#file-list').addClass('grid-view');
+            $('#view-grid-btn').addClass('active');
+            $('#view-list-btn').removeClass('active');
+        } else {
+            $('#file-list').removeClass('grid-view');
+            $('#view-list-btn').addClass('active');
+            $('#view-grid-btn').removeClass('active');
+        }
+    }
+
     // Function to format file size
     function formatSize(bytes) {
         if (bytes === 0) return '0 Bytes';
@@ -19,6 +47,7 @@ $(document).ready(function() {
 
     // Function to refresh the file list
     function loadFiles() {
+        saveState(); // Save state every time we load files
         $.get('/api/files', { 
             search: currentSearch, 
             page: currentPage,
@@ -263,6 +292,7 @@ $(document).ready(function() {
 
 
     // Initial load
+    loadState();
     loadFiles();
 
     // Search functionality
