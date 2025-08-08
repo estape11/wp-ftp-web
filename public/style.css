@@ -5,19 +5,20 @@ body {
     background-color: #1a1a1a;
     color: #ffffff;
     margin: 0;
-    padding: 10px 20px; /* Reduced vertical padding */
+    padding: 10px 20px;
+    font-size: 14px; /* Base font size for scaling */
 }
 
 h1, h2 {
-    font-weight: 300; /* Light font weight for headings */
+    font-weight: 300;
     border-bottom: none;
     padding-bottom: 0;
     margin-bottom: 5px;
 }
 
 h1 {
-    font-size: 4em;
-    margin-bottom: 15px; /* Reduced margin */
+    font-size: 3em; /* Smaller title */
+    margin-bottom: 15px;
 }
 
 h2 {
