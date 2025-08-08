@@ -5,6 +5,7 @@ const path = require('path');
 const portfinder = require('portfinder');
 
 const app = express();
+app.use(express.json()); // Middleware to parse JSON bodies
 
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
@@ -13,10 +14,12 @@ if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR);
 }
 
-// Multer setup for file uploads
+// Multer setup for file uploads - now destination is dynamic
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, UPLOADS_DIR);
+        const currentPath = req.body.path || '';
+        const dest = path.join(UPLOADS_DIR, currentPath);
+        fs.mkdir(dest, { recursive: true }, (err) => cb(err, dest));
     },
     filename: (req, file, cb) => {
         cb(null, file.originalname);
@@ -29,26 +32,31 @@ app.use(express.static('public'));
 
 // API to get the list of files with metadata, search, and pagination
 app.get('/api/files', (req, res) => {
-    const { search = '', page = 1, pageSize = 10, sortBy = 'name_asc' } = req.query;
+    const { currentPath = '', search = '', page = 1, pageSize = 10, sortBy = 'name_asc' } = req.query;
+    const targetPath = path.join(UPLOADS_DIR, currentPath);
 
-    fs.readdir(UPLOADS_DIR, (err, files) => {
+    // Security check to prevent directory traversal
+    if (!targetPath.startsWith(UPLOADS_DIR)) {
+        return res.status(400).send('Invalid path');
+    }
+
+    fs.readdir(targetPath, { withFileTypes: true }, (err, items) => {
         if (err) {
-            return res.status(500).send('Unable to scan files');
+            return res.status(500).send('Unable to scan directory');
         }
 
-        // Get file stats
-        const fileDetailsPromises = files.map(file => {
+        const fileDetailsPromises = items.map(item => {
             return new Promise((resolve, reject) => {
-                fs.stat(path.join(UPLOADS_DIR, file), (err, stats) => {
-                    if (err) {
-                        return reject(err);
-                    }
+                fs.stat(path.join(targetPath, item.name), (err, stats) => {
+                    if (err) return reject(err);
+                    
                     resolve({
-                        name: file,
+                        name: item.name,
                         size: stats.size,
                         createdAt: stats.birthtime,
                         modifiedAt: stats.mtime,
-                        type: path.extname(file).toLowerCase()
+                        isDirectory: item.isDirectory(),
+                        type: item.isDirectory() ? 'folder' : path.extname(item.name).toLowerCase()
                     });
                 });
             });
@@ -60,13 +68,15 @@ app.get('/api/files', (req, res) => {
                 file.name.toLowerCase().includes(search.toLowerCase())
             );
 
-            // Sort files
-            const [sortField, sortOrder] = sortBy.split('_');
+            // Sort files (folders first, then by selected criteria)
             filteredFiles.sort((a, b) => {
+                if (a.isDirectory && !b.isDirectory) return -1;
+                if (!a.isDirectory && b.isDirectory) return 1;
+
+                const [sortField, sortOrder] = sortBy.split('_');
                 let aValue = a[sortField];
                 let bValue = b[sortField];
 
-                // Special case for name and type for case-insensitive sorting
                 if (sortField === 'name' || sortField === 'type') {
                     aValue = aValue.toLowerCase();
                     bValue = bValue.toLowerCase();
@@ -96,25 +106,58 @@ app.get('/api/files', (req, res) => {
 
 // API to handle file uploads
 app.post('/api/upload', upload.array('files'), (req, res) => {
-    res.redirect('/');
+    res.status(200).send('Files uploaded successfully');
+});
+
+// API to create a new folder
+app.post('/api/folders', (req, res) => {
+    const { currentPath, folderName } = req.body;
+    const newFolderPath = path.join(UPLOADS_DIR, currentPath, folderName);
+
+    if (!newFolderPath.startsWith(UPLOADS_DIR)) {
+        return res.status(400).send('Invalid path');
+    }
+
+    fs.mkdir(newFolderPath, { recursive: true }, (err) => {
+        if (err) {
+            return res.status(500).send('Error creating folder');
+        }
+        res.status(201).send('Folder created');
+    });
 });
 
 // API to download a file
-app.get('/download/:filename', (req, res) => {
-    const filename = req.params.filename;
-    const filepath = path.join(UPLOADS_DIR, filename);
+app.get('/download', (req, res) => {
+    const { p } = req.query; // file path
+    const filepath = path.join(UPLOADS_DIR, p);
+
+    if (!filepath.startsWith(UPLOADS_DIR)) {
+        return res.status(400).send('Invalid path');
+    }
     res.download(filepath);
 });
 
-// API to delete a file
-app.delete('/api/files/:filename', (req, res) => {
-    const filename = req.params.filename;
-    const filepath = path.join(UPLOADS_DIR, filename);
-    fs.unlink(filepath, (err) => {
-        if (err) {
-            res.status(500).send('Error deleting file');
+// API to delete a file or folder
+app.delete('/api/delete', (req, res) => {
+    const { p } = req.body; // file path
+    const itemPath = path.join(UPLOADS_DIR, p);
+
+    if (!itemPath.startsWith(UPLOADS_DIR)) {
+        return res.status(400).send('Invalid path');
+    }
+
+    fs.stat(itemPath, (err, stats) => {
+        if (err) return res.status(404).send('Item not found');
+
+        const callback = (err) => {
+            if (err) return res.status(500).send('Error deleting item');
+            res.status(200).send('Item deleted');
+        };
+
+        if (stats.isDirectory()) {
+            fs.rm(itemPath, { recursive: true, force: true }, callback);
         } else {
-            res.status(200).send('File deleted');
+            fs.unlink(itemPath, callback);
         }
     });
 });

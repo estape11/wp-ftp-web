@@ -135,6 +135,27 @@ li:hover {
     display: block;
 }
 
+#breadcrumb-container {
+    padding: 10px;
+    background-color: #2a2a2a;
+    margin-bottom: 20px;
+}
+
+.breadcrumb-link {
+    color: #00aaff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.breadcrumb-link:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    margin: 0 5px;
+    color: #888;
+}
+
 /* Gallery View Styles */
 #file-list.grid-view {
     display: flex;

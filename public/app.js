@@ -6,7 +6,8 @@ $(document).ready(function() {
     var currentPage = 1;
     var currentSearch = '';
     var currentSort = 'name_asc';
-    var currentView = 'list'; // 'list' or 'grid'
+    var currentView = 'list';
+    var currentPath = ''; // New state for current directory
 
     // --- STATE MANAGEMENT ---
     function saveState() {
@@ -14,6 +15,7 @@ $(document).ready(function() {
         sessionStorage.setItem('ftp_currentSearch', currentSearch);
         sessionStorage.setItem('ftp_currentSort', currentSort);
         sessionStorage.setItem('ftp_currentView', currentView);
+        sessionStorage.setItem('ftp_currentPath', currentPath);
     }
 
     function loadState() {
@@ -21,8 +23,9 @@ $(document).ready(function() {
         currentSearch = sessionStorage.getItem('ftp_currentSearch') || '';
         currentSort = sessionStorage.getItem('ftp_currentSort') || 'name_asc';
         currentView = sessionStorage.getItem('ftp_currentView') || 'list';
+        currentPath = sessionStorage.getItem('ftp_currentPath') || '';
 
-        // Update UI to reflect loaded state
+        // Update UI
         $('#search-input').val(currentSearch);
         $('#sort-select').val(currentSort);
         if (currentView === 'grid') {
@@ -36,6 +39,38 @@ $(document).ready(function() {
         }
     }
 
+    // --- BREADCRUMB NAVIGATION ---
+    function renderBreadcrumbs() {
+        var breadcrumbContainer = $('#breadcrumb-container');
+        breadcrumbContainer.empty();
+        var pathParts = currentPath.split('/').filter(Boolean);
+
+        var rootLink = $('<span class="breadcrumb-link">Root</span>').on('click', function() {
+            navigateToPath('');
+        });
+        breadcrumbContainer.append(rootLink);
+
+        var currentFullPath = '';
+        pathParts.forEach(function(part) {
+            currentFullPath += part + '/';
+            var partLink = $('<span class="breadcrumb-link">' + part + '</span>').data('path', currentFullPath);
+            breadcrumbContainer.append('<span class="breadcrumb-separator">/</span>').append(partLink);
+        });
+
+        breadcrumbContainer.on('click', '.breadcrumb-link', function() {
+            var path = $(this).data('path');
+            if (typeof path !== 'undefined') {
+                navigateToPath(path);
+            }
+        });
+    }
+
+    function navigateToPath(path) {
+        currentPath = path;
+        currentPage = 1;
+        loadFiles();
+    }
+
     // Function to format file size
     function formatSize(bytes) {
         if (bytes === 0) return '0 Bytes';
@@ -47,10 +82,12 @@ $(document).ready(function() {
 
     // Function to refresh the file list
     function loadFiles() {
-        saveState(); // Save state every time we load files
+        saveState();
+        renderBreadcrumbs();
         var pageSize = currentView === 'grid' ? 24 : 10;
 
         $.get('/api/files', { 
+            currentPath: currentPath,
             search: currentSearch, 
             page: currentPage,
             sortBy: currentSort,
@@ -60,7 +97,7 @@ $(document).ready(function() {
             fileList.empty();
 
             if (data.files.length === 0) {
-                fileList.append('<li>No files found.</li>');
+                fileList.append('<li>No files or folders found.</li>');
                 return;
             }
 
@@ -70,34 +107,37 @@ $(document).ready(function() {
                 var isImage = imageTypes.indexOf(file.type) > -1;
                 var listItem;
 
-                if (currentView === 'grid' && !isImage) {
-                    return; // Skip non-images in grid view
+                if (currentView === 'grid' && !isImage && !file.isDirectory) {
+                    return; // Skip non-images in grid view (but show folders)
                 }
 
                 var modifiedDate = new Date(file.modifiedAt).toLocaleDateString();
-                
+                var fullPath = (currentPath ? currentPath + '/' : '') + file.name;
+
                 var actionsHtml = '<div class="file-actions">' +
-                    '<button class="icon-btn preview-btn" title="Preview" data-filename="' + file.name + '" data-filetype="' + file.type + '">' +
-                    '<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>' +
-                    '</button>' +
-                    '<a href="/download/' + file.name + '" class="icon-btn" title="Download">' +
-                    '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>' +
-                    '</a>' +
-                    '<button class="icon-btn delete-btn" title="Delete" data-filename="' + file.name + '">' +
-                    '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
-                    '</button>' +
+                    (file.isDirectory ? '' : '<button class="icon-btn preview-btn" title="Preview" data-path="' + fullPath + '" data-filetype="' + file.type + '"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></button>') +
+                    (file.isDirectory ? '' : '<a href="/download?p=' + encodeURIComponent(fullPath) + '" class="icon-btn" title="Download"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></a>') +
+                    '<button class="icon-btn delete-btn" title="Delete" data-path="' + fullPath + '"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>' +
                     '</div>';
 
+                var folderIcon = '<svg class="folder-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>';
                 var infoHtml = '<div class="file-info">' +
+                    (file.isDirectory ? folderIcon : '') +
                     '<span class="file-name">' + file.name + '</span>' +
-                    '<span class="file-meta">Size: ' + formatSize(file.size) + ' | Modified: ' + modifiedDate + '</span>' +
+                    '<span class="file-meta">' + (file.isDirectory ? '' : 'Size: ' + formatSize(file.size) + ' | ') + 'Modified: ' + modifiedDate + '</span>' +
                     '</div>';
+
+                listItem = $('<li></li>').data('path', fullPath).data('isDirectory', file.isDirectory);
 
                 if (currentView === 'grid') {
-                    listItem = $('<li></li>').css('background-image', 'url(/download/' + file.name + ')');
+                    if (isImage) {
+                        listItem.css('background-image', 'url(/download?p=' + encodeURIComponent(fullPath) + ')');
+                    } else if (file.isDirectory) {
+                        listItem.addClass('folder-tile');
+                    }
                     listItem.append(infoHtml + actionsHtml);
                 } else {
-                    listItem = $('<li>' + infoHtml + actionsHtml + '</li>');
+                    listItem.append(infoHtml).append(actionsHtml);
                 }
                 
                 fileList.append(listItem);
@@ -113,12 +153,9 @@ $(document).ready(function() {
     // --- VIEW SWITCHER ---
     function switchView(newView) {
         if (currentView === newView) return;
-
         currentView = newView;
         var fileList = $('#file-list');
-
         fileList.addClass('view-out');
-
         setTimeout(function() {
             if (newView === 'grid') {
                 fileList.addClass('grid-view');
@@ -129,51 +166,35 @@ $(document).ready(function() {
                 $('#view-list-btn').addClass('active');
                 $('#view-grid-btn').removeClass('active');
             }
-            
             loadFiles();
-            
             fileList.removeClass('view-out').addClass('view-in');
-            
-            setTimeout(function() {
-                fileList.removeClass('view-in');
-            }, 200);
-
+            setTimeout(function() { fileList.removeClass('view-in'); }, 200);
         }, 200);
     }
 
-    $('#view-list-btn').on('click', function() {
-        switchView('list');
-    });
-
-    $('#view-grid-btn').on('click', function() {
-        switchView('grid');
-    });
+    $('#view-list-btn').on('click', function() { switchView('list'); });
+    $('#view-grid-btn').on('click', function() { switchView('grid'); });
 
     function showNotification(message) {
         var notification = $('<div class="notification">' + message + '</div>');
         $('#notification-area').append(notification);
-        setTimeout(function() {
-            notification.fadeOut(500, function() {
-                $(this).remove();
-            });
-        }, 3000);
+        setTimeout(function() { notification.fadeOut(500, function() { $(this).remove(); }); }, 3000);
     }
 
-    // --- PREVIEW LOGIC ---
+    // --- PREVIEW & FOLDER NAVIGATION ---
     var modal = $('#preview-modal');
     var previewData = $('#preview-data');
 
-    function showPreview(filename, filetype) {
+    function showPreview(filePath, filetype) {
         var imageTypes = ['.png', '.jpg', '.jpeg', '.gif', '.svg'];
         var textTypes = ['.txt', '.md', '.json', '.js', '.css', '.html'];
-
-        previewData.empty(); // Clear previous content
+        previewData.empty();
 
         if (imageTypes.indexOf(filetype) > -1) {
-            previewData.html('<img src="/download/' + filename + '">');
+            previewData.html('<img src="/download?p=' + encodeURIComponent(filePath) + '">');
             modal.show();
         } else if (textTypes.indexOf(filetype) > -1) {
-            $.get('/download/' + filename, function(data) {
+            $.get('/download?p=' + encodeURIComponent(filePath), function(data) {
                 previewData.html('<pre>' + data + '</pre>');
                 modal.show();
             }).fail(function() {
@@ -186,34 +207,19 @@ $(document).ready(function() {
         }
     }
 
-    // Click on preview button
-    $('#file-list').on('click', '.preview-btn', function() {
-        var filename = $(this).data('filename');
-        var filetype = $(this).data('filetype');
-        showPreview(filename, filetype);
-    });
-
-    // Click on the whole row to preview
     $('#file-list').on('click', 'li', function(e) {
-        // Don't trigger if a button or link was clicked
-        if ($(e.target).closest('.file-actions').length > 0) {
-            return;
-        }
-        var filename = $(this).find('.preview-btn').data('filename');
-        var filetype = $(this).find('.preview-btn').data('filetype');
-        showPreview(filename, filetype);
-    });
-
-    $('#preview-close, #preview-overlay').on('click', function() {
-        modal.hide();
-    });
-
-    // Close modal with ESC key
-    $(document).on('keydown', function(e) {
-        if (e.keyCode === 27 && modal.is(':visible')) { // 27 is the key code for ESC
-            modal.hide();
+        if ($(e.target).closest('.file-actions').length > 0) return;
+        
+        if ($(this).data('isDirectory')) {
+            navigateToPath($(this).data('path'));
+        } else {
+            var btn = $(this).find('.preview-btn');
+            showPreview(btn.data('path'), btn.data('filetype'));
         }
     });
+
+    $('#preview-close, #preview-overlay').on('click', function() { modal.hide(); });
+    $(document).on('keydown', function(e) { if (e.keyCode === 27 && modal.is(':visible')) { modal.hide(); } });
 
     // --- UPLOAD LOGIC ---
     var dropZone = $('#drop-zone');
@@ -226,8 +232,8 @@ $(document).ready(function() {
 
     function uploadFiles(files) {
         var formData = new FormData();
-        var numFiles = files.length;
-        for (var i = 0; i < numFiles; i++) {
+        formData.append('path', currentPath); // Add current path to upload
+        for (var i = 0; i < files.length; i++) {
             formData.append('files', files[i]);
         }
 
@@ -252,15 +258,14 @@ $(document).ready(function() {
             },
             success: function() {
                 progressContainer.hide();
-                // Reset view to show the newest files first
                 currentPage = 1;
                 currentSort = 'modifiedAt_desc';
                 $('#sort-select').val(currentSort);
                 loadFiles(); 
-                showNotification('Successfully uploaded ' + numFiles + ' file(s).');
+                showNotification('Successfully uploaded ' + files.length + ' file(s).');
                 currentUploadXhr = null;
             },
-            error: function(jqXHR, textStatus, errorThrown) {
+            error: function(jqXHR, textStatus) {
                 progressContainer.hide();
                 if (textStatus === 'abort') {
                     showNotification('Upload cancelled.');
@@ -272,98 +277,73 @@ $(document).ready(function() {
         });
     }
 
-    cancelBtn.on('click', function() {
-        if (currentUploadXhr) {
-            currentUploadXhr.abort();
-        }
-    });
-
-    // Trigger file input from button
-    uploadButton.on('click', function() {
-        fileInput.click();
-    });
-
-    fileInput.on('change', function() {
-        uploadFiles(this.files);
-    });
-
-    // Drag and drop events
-    dropZone.on('dragover', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).addClass('dragover');
-    });
-
-    dropZone.on('dragleave', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).removeClass('dragover');
-    });
-
+    cancelBtn.on('click', function() { if (currentUploadXhr) { currentUploadXhr.abort(); } });
+    uploadButton.on('click', function() { fileInput.click(); });
+    fileInput.on('change', function() { uploadFiles(this.files); });
+    dropZone.on('dragover', function(e) { e.preventDefault(); $(this).addClass('dragover'); });
+    dropZone.on('dragleave', function(e) { $(this).removeClass('dragover'); });
     dropZone.on('drop', function(e) {
         e.preventDefault();
-        e.stopPropagation();
         $(this).removeClass('dragover');
-        var files = e.originalEvent.dataTransfer.files;
-        uploadFiles(files);
+        uploadFiles(e.originalEvent.dataTransfer.files);
     });
-    
-    // Make the whole drop-zone clickable
-    dropZone.on('click', function(e) {
-        if (e.target === this || $(e.target).is('p')) {
-             fileInput.click();
-        }
-    });
+    dropZone.on('click', function(e) { if (e.target === this || $(e.target).is('p')) { fileInput.click(); } });
 
-
-    // Initial load
+    // --- INITIAL LOAD & EVENT BINDINGS ---
     loadState();
     loadFiles();
 
-    // Search functionality
     $('#search-input').on('keyup', function() {
         currentSearch = $(this).val();
-        currentPage = 1; // Reset to first page
+        currentPage = 1;
         loadFiles();
     });
 
-    // Sort functionality
     $('#sort-select').on('change', function() {
         currentSort = $(this).val();
-        currentPage = 1; // Reset to first page
+        currentPage = 1;
         loadFiles();
     });
 
-    // Refresh button
-    $('#refresh-button').on('click', function() {
-        loadFiles();
-    });
+    $('#refresh-button').on('click', loadFiles);
 
-    // Pagination controls
-    $('#prev-page').on('click', function() {
-        if (currentPage > 1) {
-            currentPage--;
-            loadFiles();
+    $('#new-folder-btn').on('click', function() {
+        var folderName = prompt("Enter a name for the new folder:");
+        if (folderName) {
+            $.ajax({
+                url: '/api/folders',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ currentPath: currentPath, folderName: folderName }),
+                success: function() {
+                    loadFiles();
+                    showNotification('Folder "' + folderName + '" created.');
+                },
+                error: function() {
+                    alert('Error creating folder.');
+                }
+            });
         }
     });
 
-    $('#next-page').on('click', function() {
-        currentPage++;
-        loadFiles();
-    });
+    $('#prev-page').on('click', function() { if (currentPage > 1) { currentPage--; loadFiles(); } });
+    $('#next-page').on('click', function() { currentPage++; loadFiles(); });
 
-    // Handle delete button clicks
-    $('#file-list').on('click', '.delete-btn', function() {
-        var filename = $(this).data('filename');
-        if (confirm('Are you sure you want to delete ' + filename + '?')) {
+    $('#file-list').on('click', '.delete-btn', function(e) {
+        e.stopPropagation(); // Prevent row click from firing
+        var pathToDelete = $(this).data('path');
+        if (confirm('Are you sure you want to delete "' + pathToDelete + '"?')) {
             $.ajax({
-                url: '/api/files/' + filename,
+                url: '/api/delete',
                 type: 'DELETE',
+                contentType: 'application/json',
+                data: JSON.stringify({ p: pathToDelete }),
                 success: function() {
-                    loadFiles(); // Refresh the list
+                    loadFiles();
+                    showNotification('"' + pathToDelete + '" was deleted.');
                 },
                 error: function() {
-                    alert('Error deleting file.');
+                    alert('Error deleting item.');
                 }
             });
         }
