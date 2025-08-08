@@ -29,7 +29,7 @@ app.use(express.static('public'));
 
 // API to get the list of files with metadata, search, and pagination
 app.get('/api/files', (req, res) => {
-    const { search = '', page = 1, pageSize = 10, sortBy = 'name_asc' } = req.query;
+    const { search = '', page = 1, pageSize = 24, sortBy = 'name_asc' } = req.query;
 
     fs.readdir(UPLOADS_DIR, (err, files) => {
         if (err) {
