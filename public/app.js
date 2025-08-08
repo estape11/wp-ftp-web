@@ -121,6 +121,13 @@ $(document).ready(function() {
         modal.hide();
     });
 
+    // Close modal with ESC key
+    $(document).on('keydown', function(e) {
+        if (e.keyCode === 27 && modal.is(':visible')) { // 27 is the key code for ESC
+            modal.hide();
+        }
+    });
+
     // --- UPLOAD LOGIC ---
     var dropZone = $('#drop-zone');
     var uploadButton = $('#upload-button');
