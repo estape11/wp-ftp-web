@@ -457,4 +457,30 @@ li:hover {
     to   { transform: translateX(0); opacity: 1; }
 }
 
+/* Responsive Styles for Small Screens */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 2.5em;
+    }
+
+    #controls-container {
+        display: block;
+    }
+
+    #search-container, #sort-container {
+        display: block;
+        width: 100%;
+        margin-left: 0;
+        margin-bottom: 10px;
+    }
+
+    #file-list.grid-view li {
+        width: calc(50% - 5px); /* 2 columns with gap */
+    }
+}
+
 
