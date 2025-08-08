@@ -56,7 +56,7 @@ This project was built iteratively based on the following user requests:
     ```
 
 4.  **Access the Client:** Open your web browser and navigate to:
-    [http://localhost:3000](http://localhost:3000)
+    [http://localhost:8080](http://localhost:8080)
 
 ## How to Use the Application
 
