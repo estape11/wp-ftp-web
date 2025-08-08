@@ -85,6 +85,9 @@ $(document).ready(function() {
         saveState();
         renderBreadcrumbs();
         var pageSize = currentView === 'grid' ? 24 : 10;
+        var fileList = $('#file-list');
+
+        fileList.addClass('loading');
 
         $.get('/api/files', { 
             currentPath: currentPath,
@@ -93,7 +96,6 @@ $(document).ready(function() {
             sortBy: currentSort,
             pageSize: pageSize
         }, function(data) {
-            var fileList = $('#file-list');
             fileList.empty();
 
             if (data.files.length === 0) {
@@ -147,6 +149,8 @@ $(document).ready(function() {
             $('#page-info').text('Page ' + data.page + ' of ' + Math.ceil(data.totalFiles / data.pageSize));
             $('#prev-page').prop('disabled', data.page <= 1);
             $('#next-page').prop('disabled', data.page * data.pageSize >= data.totalFiles);
+        }).always(function() {
+            fileList.removeClass('loading');
         });
     }
 

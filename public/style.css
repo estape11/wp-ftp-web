@@ -32,6 +32,16 @@ ul {
     margin-bottom: 20px;
 }
 
+#file-list {
+    position: relative; /* Needed for loading overlay */
+    transition: opacity 0.2s;
+}
+
+#file-list.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 li {
     margin-bottom: 5px;
     padding: 15px;
