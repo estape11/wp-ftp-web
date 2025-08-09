@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
         fs.mkdir(dest, { recursive: true }, (err) => cb(err, dest));
     },
     filename: (req, file, cb) => {
-        cb(null, file.originalname);
+        cb(null, `_temp_${file.originalname}`);
     }
 });
 const upload = multer({ storage: storage });
@@ -106,7 +106,29 @@ app.get('/api/files', (req, res) => {
 
 // API to handle file uploads
 app.post('/api/upload', upload.array('files'), (req, res) => {
-    res.status(200).send('Files uploaded successfully');
+    const files = req.files;
+    if (!files || files.length === 0) {
+        return res.status(400).send('No files uploaded.');
+    }
+
+    const renamePromises = files.map(file => {
+        const tempPath = file.path;
+        const finalPath = path.join(path.dirname(tempPath), file.originalname);
+        
+        return new Promise((resolve, reject) => {
+            fs.rename(tempPath, finalPath, (err) => {
+                if (err) return reject(err);
+                resolve();
+            });
+        });
+    });
+
+    Promise.all(renamePromises)
+        .then(() => res.status(200).send('Files uploaded successfully'))
+        .catch(err => {
+            console.error('Error renaming files:', err);
+            res.status(500).send('Error processing files');
+        });
 });
 
 // API to create a new folder
